@@ -36,6 +36,7 @@ Future<FlutterUnifiedMessaging> notificationService(Ref ref) async {
 
   // Initialize the notification service
   await service.initialize();
+  await service.getFCMToken();
 
   // Set up listeners with navigation handling
   final context = NavigationService.navigatorKey.currentContext;

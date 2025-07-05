@@ -55,11 +55,13 @@ class NotificationHandler {
 
     _isInitialized = true;
     return permissionsGranted;
-  }  /// Listen to notifications and handle routing
+  }
+
+  /// Listen to notifications and handle routing
   /// This sets up listeners for both FCM and local notification taps
   Future<void> listen({
     void Function(String title, String body, Map<String, dynamic> data)?
-        onNotificationReceived,
+    onNotificationReceived,
     void Function(Map<String, dynamic> data)? onNotificationTap,
     void Function(String newToken)? onTokenRefresh,
   }) async {
@@ -127,10 +129,12 @@ class NotificationHandler {
       List<AndroidNotificationAction>? androidActions;
       if (actions != null && actions.isNotEmpty) {
         androidActions = actions
-            .map((action) => AndroidNotificationAction(
-                  action.toLowerCase().replaceAll(' ', '_'),
-                  action,
-                ))
+            .map(
+              (action) => AndroidNotificationAction(
+                action.toLowerCase().replaceAll(' ', '_'),
+                action,
+              ),
+            )
             .toList();
       }
 
@@ -148,8 +152,8 @@ class NotificationHandler {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
-          categoryIdentifier: actions != null && actions.isNotEmpty 
-              ? 'unified_messaging_category' 
+          categoryIdentifier: actions != null && actions.isNotEmpty
+              ? 'unified_messaging_category'
               : null,
         ),
       );

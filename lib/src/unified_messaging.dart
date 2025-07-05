@@ -31,7 +31,7 @@ class FlutterUnifiedMessaging {
   Future<void> listen({
     required NotificationNavigationHandler navigationHandler,
     void Function(String title, String body, Map<String, dynamic> data)?
-        onNotificationReceived,
+    onNotificationReceived,
     void Function(String newToken)? onTokenRefresh,
   }) async {
     _navigationHandler = navigationHandler;
@@ -57,12 +57,7 @@ class FlutterUnifiedMessaging {
     Map<String, dynamic>? data,
     List<String>? actions,
   }) async {
-    await _handler.send(
-      title: title, 
-      body: body, 
-      data: data,
-      actions: actions,
-    );
+    await _handler.send(title: title, body: body, data: data, actions: actions);
   }
 
   /// Get FCM token for server-side push notifications

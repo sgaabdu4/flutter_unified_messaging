@@ -118,15 +118,50 @@ flutterfire configure
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 ```
 
-**iOS:** Add to `ios/Runner/AppDelegate.swift`:
+**iOS:** Follow these steps for proper push notification setup:
+
+1. **Enable Push Notifications in Xcode:**
+   - Open `ios/Runner.xcworkspace` in Xcode
+   - Select your project → Target → "Signing & Capabilities"
+   - Click "+ Capability" → Search for "Push Notifications"
+   - Add the capability
+
+2. **Enable Background Modes (iOS only):**
+   - In the same "Signing & Capabilities" tab
+   - Click "+ Capability" → Search for "Background Modes"
+   - Enable both "Background fetch" and "Remote notifications"
+
+3. **Update AppDelegate.swift:**
 ```swift
+import UIKit
+import Flutter
 import firebase_messaging
 
-// In application didFinishLaunchingWithOptions:
-if #available(iOS 10.0, *) {
-  UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+@UIApplicationMain
+@objc class AppDelegate: FlutterAppDelegate {
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    GeneratedPluginRegistrant.register(with: self)
+    
+    // Register for remote notifications
+    if #available(iOS 10.0, *) {
+      UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+    }
+    
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
 }
 ```
+
+4. **Apple Developer Account Setup** (for production):
+   - Create APNs Key in Apple Developer Console
+   - Register your App Identifier with Push Notifications enabled
+   - Create Provisioning Profile
+   - Upload APNs Key to Firebase Console
+
+   *For detailed steps, see: https://firebase.flutter.dev/docs/messaging/apple-integration/*
 
 ## API
 

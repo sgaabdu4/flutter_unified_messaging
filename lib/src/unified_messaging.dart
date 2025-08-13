@@ -45,6 +45,12 @@ class FlutterUnifiedMessaging {
     );
   }
 
+  /// Update the navigation handler at runtime.
+  /// Useful if your app's navigation wiring changes after listen().
+  void setNavigationHandler(NotificationNavigationHandler navigationHandler) {
+    _navigationHandler = navigationHandler;
+  }
+
   /// Send a local notification
   ///
   /// [title] notification title

@@ -1,11 +1,13 @@
 name: flutter_unified_messaging
 description: "A project-agnostic Flutter package for simplified FCM and local notifications with customizable smart navigation handling."
 version: 1.1.0
-homepage: https://github.com/yourusername/flutter_unified_messaging
+homepage: https://github.com/sgaabdu4/flutter_unified_messaging
+repository: https://github.com/sgaabdu4/flutter_unified_messaging
+issue_tracker: https://github.com/sgaabdu4/flutter_unified_messaging/issues
 
 environment:
-  sdk: ^3.8.1
-  flutter: ">=1.17.0"
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:

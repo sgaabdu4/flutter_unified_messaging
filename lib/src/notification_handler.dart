@@ -28,10 +28,20 @@ class NotificationHandler {
       FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
-  bool _listenersSetup = false;
+  bool _platformStreamsBound = false;
+  bool _initialMessageHandled = false;
   String? _fcmToken;
   void Function(Map<String, dynamic> data)? _onNotificationTap;
   void Function(String newToken)? _onTokenRefresh;
+  int _notificationIdCounter = 0;
+
+  int _nextNotificationId() {
+    _notificationIdCounter++;
+    if (_notificationIdCounter > 0x7fffffff) {
+      _notificationIdCounter = 1;
+    }
+    return _notificationIdCounter;
+  }
 
   /// Initialize FCM and Local notifications, including requesting permissions
   Future<bool> initialize() async {
@@ -66,50 +76,54 @@ class NotificationHandler {
     void Function(String newToken)? onTokenRefresh,
   }) async {
     if (!_isInitialized) return;
-    if (_listenersSetup) return;
 
-    // Store the callbacks for local notification taps and token refresh
+    // Store/refresh callbacks for local notification taps and token refresh
     _onNotificationTap = onNotificationTap;
     _onTokenRefresh = onTokenRefresh;
 
-    // Re-initialize local notifications with the tap handler
+    // Ensure local notifications are initialized with the current tap handler
     try {
       await _initializeLocalNotifications();
     } catch (e) {
       // Local notifications might fail in test environment, continue without
     }
 
-    // Listen to FCM messages when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final title = message.notification?.title ?? 'New Message';
-      final body = message.notification?.body ?? '';
-      final data = message.data;
+    if (!_platformStreamsBound) {
+      // Listen to FCM messages when app is in foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final title = message.notification?.title ?? 'New Message';
+        final body = message.notification?.body ?? '';
+        final data = message.data;
 
-      // Notify callback if provided
-      onNotificationReceived?.call(title, body, data);
+        // Notify callback if provided
+        onNotificationReceived?.call(title, body, data);
 
-      // Show local notification for foreground FCM messages
-      send(title: title, body: body, data: data);
-    });
+        // Show local notification for foreground FCM messages
+        send(title: title, body: body, data: data);
+      });
 
-    // Listen to notification taps when app is in background/terminated
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      onNotificationTap?.call(message.data);
-    });
+      // Listen to notification taps when app is in background/terminated
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _onNotificationTap?.call(message.data);
+      });
 
-    // Check if app was opened from a terminated state
-    final initialMessage = await _fcm.getInitialMessage();
-    if (initialMessage != null) {
-      onNotificationTap?.call(initialMessage.data);
+      // Listen to FCM token refresh
+      _fcm.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        _onTokenRefresh?.call(newToken);
+      });
+
+      _platformStreamsBound = true;
     }
 
-    // Listen to FCM token refresh
-    _fcm.onTokenRefresh.listen((newToken) {
-      _fcmToken = newToken;
-      _onTokenRefresh?.call(newToken);
-    });
-
-    _listenersSetup = true;
+    // Check if app was opened from a terminated state (only once)
+    if (!_initialMessageHandled) {
+      final initialMessage = await _fcm.getInitialMessage();
+      if (initialMessage != null) {
+        _onNotificationTap?.call(initialMessage.data);
+      }
+      _initialMessageHandled = true;
+    }
   }
 
   /// Send/show a local notification
@@ -122,7 +136,7 @@ class NotificationHandler {
     if (!_isInitialized) return;
 
     try {
-      final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+      final id = _nextNotificationId();
       final payload = data != null ? _encodePayload(data) : null;
 
       // Create notification actions if provided
@@ -136,6 +150,41 @@ class NotificationHandler {
               ),
             )
             .toList();
+      }
+
+      // On iOS, actions require a registered category. Build a dynamic category
+      // based on the provided actions and register before showing the notification.
+      String? iosCategoryId;
+      if (actions != null && actions.isNotEmpty && Platform.isIOS) {
+        final normalized = actions
+            .map((a) => a.trim())
+            .where((a) => a.isNotEmpty)
+            .toList(growable: false);
+        if (normalized.isNotEmpty) {
+          final hash = normalized.join('|').hashCode.toRadixString(36);
+          iosCategoryId = 'unified_messaging_$hash';
+
+          final darwinActions = <DarwinNotificationAction>[
+            for (final a in normalized)
+              DarwinNotificationAction.plain(
+                a.toLowerCase().replaceAll(' ', '_'),
+                a,
+              ),
+          ];
+
+          try {
+            await _initializeLocalNotifications(
+              categories: [
+                DarwinNotificationCategory(
+                  iosCategoryId,
+                  actions: darwinActions,
+                ),
+              ],
+            );
+          } catch (_) {
+            // Ignore category registration failures
+          }
+        }
       }
 
       final notificationDetails = NotificationDetails(
@@ -152,8 +201,8 @@ class NotificationHandler {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
-          categoryIdentifier: actions != null && actions.isNotEmpty
-              ? 'unified_messaging_category'
+          categoryIdentifier: (actions != null && actions.isNotEmpty)
+              ? iosCategoryId
               : null,
         ),
       );
@@ -180,30 +229,48 @@ class NotificationHandler {
   @visibleForTesting
   void reset() {
     _isInitialized = false;
-    _listenersSetup = false;
+    _platformStreamsBound = false;
+    _initialMessageHandled = false;
     _fcmToken = null;
     _onNotificationTap = null;
     _onTokenRefresh = null;
+    _notificationIdCounter = 0;
   }
 
   // Private helper methods
-  Future<void> _initializeLocalNotifications() async {
-    const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@drawable/ic_notification'),
+  Future<void> _initializeLocalNotifications({
+    List<DarwinNotificationCategory> categories = const [],
+  }) async {
+    final initSettings = InitializationSettings(
+      android: const AndroidInitializationSettings('@drawable/ic_notification'),
       iOS: DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
         requestSoundPermission: false,
+        notificationCategories: categories,
       ),
     );
 
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
-        if (response.payload != null && _onNotificationTap != null) {
-          final data = _decodePayload(response.payload!);
-          _onNotificationTap!(data);
+        if (_onNotificationTap == null) return;
+        // Decode payload
+        Map<String, dynamic> data = {};
+        if (response.payload != null) {
+          data = _decodePayload(response.payload!);
         }
+        // Attach iOS/Android action identifiers if present
+        final actionId = response.actionId;
+        if (actionId != null && actionId.isNotEmpty) {
+          data = {...data, '_action': actionId};
+        }
+        // Input (for text actions) if any
+        final input = response.input;
+        if (input != null && input.isNotEmpty) {
+          data = {...data, '_input': input};
+        }
+        _onNotificationTap!(data);
       },
     );
 
@@ -266,7 +333,9 @@ class NotificationHandler {
         );
 
         final granted = await androidPlugin?.requestNotificationsPermission();
-        allPermissionsGranted = granted ?? false;
+        // On Android versions before 13 (API 33), this can return null.
+        // Treat null as granted to avoid false negatives on older devices.
+        allPermissionsGranted = granted ?? true;
       }
     } catch (e) {
       // Local notification permissions might fail in test environment

@@ -255,20 +255,64 @@ class InboxPage extends StatelessWidget {
 }
 ```
 
-Example FCM payload (server → device)
-- Include a notification block for background display, and data for routing:
+## FCM payloads (server → device)
 
+Payload contract
+- Put all navigation fields inside `data`.
+  - `data.route`: a full route like `/appointments/123` (highest priority)
+  - `data.type`: a semantic type like `appointment` (mapped via `typeRouteMap`)
+  - Optional: any extra keys you need (`id`, `chatId`, etc.).
+- Don’t place `route` or `type` inside `notification`.
+
+Foreground vs background
+- Foreground FCM: we show a local notification; taps route via your handler.
+- Background/terminated FCM:
+  - If you include a `notification` block, the OS shows it and `onMessageOpenedApp` provides `RemoteMessage.data` on tap.
+  - If you send a data-only (silent) message, it won’t display unless you handle it (e.g., background handler) and optionally show a local notification.
+
+Examples
+- Direct route (with OS-rendered notification for background):
 ```json
 {
   "message": {
     "token": "<device-token>",
     "notification": { "title": "Your appointment", "body": "Starts soon" },
-    "data": { "type": "appointment", "route": "/appointments" },
+    "data": { "route": "/appointments/123", "source": "crm" },
     "android": { "priority": "HIGH" },
     "apns": { "headers": { "apns-priority": "10" } }
   }
 }
 ```
+
+- Type-mapped route (server specifies type only):
+```json
+{
+  "message": {
+    "token": "<device-token>",
+    "notification": { "title": "Reminder", "body": "New alert" },
+    "data": { "type": "alert" }
+  }
+}
+```
+
+- Data-only (silent) message example:
+```json
+{
+  "message": {
+    "token": "<device-token>",
+    "data": { "type": "appointment", "route": "/appointments" },
+    "android": { "priority": "HIGH" },
+    "apns": {
+      "headers": { "apns-priority": "5", "apns-push-type": "background" },
+      "payload": { "aps": { "content-available": 1 } }
+    }
+  }
+}
+```
+
+Notes
+- For background display without custom code, include a `notification` block as in the first two examples.
+- If you need action identifiers from taps consistently, prefer data-only messages and show a local notification with actions when you receive them in the foreground or via a background handler; OS-rendered FCM notifications don’t surface which action was tapped.
 
 ### With Riverpod (Recommended)
 
@@ -345,10 +389,9 @@ This package wraps Firebase Cloud Messaging (push) and flutter_local_notificatio
 ```yaml
 dependencies:
   flutter_unified_messaging: ^1.1.0 # or a local path during development
-  firebase_core: ^3.0.0 # required to initialize Firebase
-  # Your app may already have these as transitive; adding explicitly is OK
-  firebase_messaging: ^15.2.9
-  flutter_local_notifications: ^19.3.0
+  firebase_core: ^4.0.0
+  firebase_messaging: ^16.0.0
+  flutter_local_notifications: ^19.4.0
 ```
 
 Notes
@@ -407,7 +450,7 @@ Enable capabilities in Xcode (Runner target → Signing & Capabilities):
 - Add “Push Notifications”.
 - Add “Background Modes” → enable “Background fetch” and “Remote notifications”.
 
-Update `AppDelegate.swift` to allow local notifications to display while the app is foregrounded:
+Update `AppDelegate.swift` to allow notifications to display while the app is foregrounded:
 
 ```swift
 import UIKit
@@ -460,55 +503,115 @@ References
 - iOS/APNs integration: https://firebase.flutter.dev/docs/messaging/apple-integration
 - flutter_local_notifications setup: https://pub.dev/packages/flutter_local_notifications
 
-**Android:** Add to `android/app/src/main/AndroidManifest.xml`:
-```xml
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-```
+## Common mistakes and fixes
 
-**iOS:** Follow these steps for proper push notification setup:
+- Putting route/type under notification instead of data
+  - Fix: put navigation keys under `data` only. The OS ignores custom keys under `notification`.
 
-1. **Enable Push Notifications in Xcode:**
-   - Open `ios/Runner.xcworkspace` in Xcode
-   - Select your project → Target → "Signing & Capabilities"
-   - Click "+ Capability" → Search for "Push Notifications"
-   - Add the capability
+- Expecting navigation without listen()
+  - Fix: call `initialize()`, then `listen(navigationHandler: ...)` after you have a navigator.
 
-2. **Enable Background Modes (iOS only):**
-   - In the same "Signing & Capabilities" tab
-   - Click "+ Capability" → Search for "Background Modes"
-   - Enable both "Background fetch" and "Remote notifications"
+- Foreground FCM not showing a banner
+  - Fix: we convert foreground FCM to a local notification automatically; ensure `initialize()` ran and iOS delegate is set.
 
-3. **Update AppDelegate.swift:**
-```swift
-import UIKit
-import Flutter
-import firebase_messaging
+- Background/terminated FCM not displaying
+  - Fix: include a `notification` block in your FCM payload. Data-only messages won’t render unless you show a local notification in a handler.
 
-@UIApplicationMain
-@objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    
-    // Register for remote notifications
-    if #available(iOS 10.0, *) {
-      UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+- Expecting _action for OS-rendered FCM notifications
+  - Fix: `_action` is only available for local notification taps. For consistent action IDs, send data-only FCM and display a local notification with actions.
+
+- Android: missing POST_NOTIFICATIONS permission (API 33+)
+  - Fix: add `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` and request permission at runtime (the plugin does this on `initialize()`).
+
+- Android: wrong small icon
+  - Fix: use a monochrome drawable (e.g., `@drawable/ic_notification`), not a mipmap launcher icon.
+
+- Android actions not working
+  - Fix: add `ActionBroadcastReceiver` within `<application>` in AndroidManifest as shown above.
+
+- iOS: notifications not showing in foreground
+  - Fix: set `UNUserNotificationCenter.current().delegate = self` in AppDelegate.
+
+- iOS: no push on simulator
+  - Fix: use a real device; simulators don’t receive APNs.
+
+- iOS: APNs not linked
+  - Fix: upload APNs key to Firebase Console and enable Push Notifications & Background Modes in Xcode.
+
+- getFCMToken returns null
+  - Fix: call after `initialize()`; handle null and retry later. Ensure APNs is set up on iOS.
+
+- typeRouteMap not set but using type
+  - Fix: provide a `typeRouteMap` in `DefaultNotificationNavigationHandler` or include a direct `route`.
+
+- Cold start navigation didn’t happen
+  - Fix: we process `getInitialMessage()` and local launch details after `listen()`. Ensure `listen()` is wired early (after navigator is ready).
+
+### iOS action buttons
+
+This package now registers iOS notification categories dynamically when you call `send(..., actions: [...])`. The action identifiers are normalized (lowercase, underscored) and returned in the tap payload under `_action`; text input responses (if used in the future) appear under `_input`.
+
+Notes:
+- iOS actions require a category; we auto-create one per unique action set.
+- Android actions work out of the box and are included as `AndroidNotificationAction`.
+
+What is `_action`?
+- `_action` is a meta key we add to the tap payload when a user selects an action button from a local notification. It contains the action identifier (normalized). It’s not a private variable; just a conventional underscore-prefixed key in the Map passed to your navigation handler. On iOS, `_input` holds any text input from a text action.
+
+Limits with FCM push action taps
+- Foreground FCM messages that we convert into local notifications will include `_action` when an action is tapped (because the tap is handled by flutter_local_notifications).
+- OS-rendered push notifications (background/terminated) via FlutterFire do not expose which action was tapped; `_action` won’t be present in that path. If you need action identifiers from push taps, prefer sending data-only FCM and showing a local notification with actions, or implement native bridging for action taps.
+
+Best practice for iOS categories
+- The underlying iOS API expects categories to be registered before notifications arrive. We dynamically (re)initialize categories as needed, but for maximum reliability you can also pre-register categories during app startup in your initialization step.
+
+Handling action taps in your app
+```dart
+// 1) Send a notification with actions
+await FlutterUnifiedMessaging.instance.send(
+  title: 'New message',
+  body: 'Open or mark as read',
+  data: {'type': 'message', 'chatId': 'abc123'},
+  actions: ['Reply', 'Mark as Read'],
+);
+
+// 2) Inspect `_action` (and optional `_input`) inside your navigation handler
+class ActionAwareNavigationHandler extends DefaultNotificationNavigationHandler {
+  ActionAwareNavigationHandler({
+    required super.navigate,
+    super.typeRouteMap,
+    super.fallbackRoute,
+  });
+
+  @override
+  void handleNotificationNavigation(Map<String, dynamic> data) {
+    // Normalized action identifiers are lowercased and underscored
+    final action = data['_action'] as String?;        // e.g., 'reply' or 'mark_as_read'
+    final inputText = data['_input'] as String?;      // present for text-input actions on iOS
+
+    if (action == 'reply') {
+      // Example: open chat and optionally pre-fill inputText
+      navigate('/messages');
+      return;
     }
-    
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    if (action == 'mark_as_read') {
+      // Example: perform side-effects (e.g., call API) and skip navigation
+      return;
+    }
+
+    // Fallback to the default route/type/fallback logic
+    super.handleNotificationNavigation(data);
   }
 }
+
+// 3) Wire it up
+await FlutterUnifiedMessaging.instance.listen(
+  navigationHandler: ActionAwareNavigationHandler(
+    navigate: (route) => navigatorKey.currentState?.pushNamed(route),
+    typeRouteMap: {'message': '/messages'},
+  ),
+);
 ```
-
-4. **Apple Developer Account Setup** (for production):
-   - Create APNs Key in Apple Developer Console
-   - Register your App Identifier with Push Notifications enabled
-   - Create Provisioning Profile
-   - Upload APNs Key to Firebase Console
-
-   *For detailed steps, see: https://firebase.flutter.dev/docs/messaging/apple-integration/*
 
 ## API
 
@@ -516,6 +619,7 @@ import firebase_messaging
 - `initialize()` - Initialize the service
 - `listen({navigationHandler})` - Set up navigation
 - `send({title, body, data})` - Send local notification
+  - On iOS, action taps return `_action` in the payload; on Android, `actionId` is also provided via `_action`.
 
 ### DefaultNotificationNavigationHandler
 - `navigate` - Your navigation function (required)

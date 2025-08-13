@@ -441,7 +441,7 @@ final fcmTokenProvider = FutureProvider<String?>((ref) async {
   return await service.getFCMToken();
 });
 
-final isListeningProvider = StateProvider<bool>((ref) => false);
+final isListeningProvider = Provider<bool>((ref) => false);
 
 /// Core initialization class for the app
 class CoreInit {

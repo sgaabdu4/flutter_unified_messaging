@@ -208,10 +208,10 @@ class NotificationHandler {
       );
 
       await _localNotifications.show(
-        id,
-        title,
-        body,
-        notificationDetails,
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
         payload: payload,
       );
     } catch (e) {
@@ -252,7 +252,7 @@ class NotificationHandler {
     );
 
     await _localNotifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (response) {
         if (_onNotificationTap == null) return;
         // Decode payload

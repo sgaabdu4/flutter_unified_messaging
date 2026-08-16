@@ -71,7 +71,7 @@ class NotificationHandler {
   /// This sets up listeners for both FCM and local notification taps
   Future<void> listen({
     void Function(String title, String body, Map<String, dynamic> data)?
-    onNotificationReceived,
+        onNotificationReceived,
     void Function(Map<String, dynamic> data)? onNotificationTap,
     void Function(String newToken)? onTokenRefresh,
   }) async {
@@ -201,17 +201,16 @@ class NotificationHandler {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
-          categoryIdentifier: (actions != null && actions.isNotEmpty)
-              ? iosCategoryId
-              : null,
+          categoryIdentifier:
+              (actions != null && actions.isNotEmpty) ? iosCategoryId : null,
         ),
       );
 
       await _localNotifications.show(
-        id,
-        title,
-        body,
-        notificationDetails,
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
         payload: payload,
       );
     } catch (e) {
@@ -252,7 +251,7 @@ class NotificationHandler {
     );
 
     await _localNotifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (response) {
         if (_onNotificationTap == null) return;
         // Decode payload
@@ -276,8 +275,8 @@ class NotificationHandler {
 
     // Check if app was launched from a local notification
     try {
-      final notificationLaunchDetails = await _localNotifications
-          .getNotificationAppLaunchDetails();
+      final notificationLaunchDetails =
+          await _localNotifications.getNotificationAppLaunchDetails();
 
       if (notificationLaunchDetails?.didNotificationLaunchApp ?? false) {
         final payload =
@@ -306,10 +305,9 @@ class NotificationHandler {
     try {
       // Request local notification permissions
       if (Platform.isIOS) {
-        final iosPlugin = _localNotifications
-            .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin
-            >();
+        final iosPlugin =
+            _localNotifications.resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>();
         final granted = await iosPlugin?.requestPermissions(
           alert: true,
           badge: true,
@@ -317,10 +315,9 @@ class NotificationHandler {
         );
         allPermissionsGranted = granted ?? false;
       } else if (Platform.isAndroid) {
-        final androidPlugin = _localNotifications
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >();
+        final androidPlugin =
+            _localNotifications.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
 
         // Create notification channel for Android
         await androidPlugin?.createNotificationChannel(
@@ -345,8 +342,8 @@ class NotificationHandler {
     // Request FCM permissions
     try {
       final fcmSettings = await _fcm.requestPermission();
-      final fcmGranted =
-          fcmSettings.authorizationStatus == AuthorizationStatus.authorized ||
+      final fcmGranted = fcmSettings.authorizationStatus ==
+              AuthorizationStatus.authorized ||
           fcmSettings.authorizationStatus == AuthorizationStatus.provisional;
 
       return allPermissionsGranted && fcmGranted;

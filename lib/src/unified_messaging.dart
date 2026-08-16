@@ -31,7 +31,7 @@ class FlutterUnifiedMessaging {
   Future<void> listen({
     required NotificationNavigationHandler navigationHandler,
     void Function(String title, String body, Map<String, dynamic> data)?
-    onNotificationReceived,
+        onNotificationReceived,
     void Function(String newToken)? onTokenRefresh,
   }) async {
     _navigationHandler = navigationHandler;

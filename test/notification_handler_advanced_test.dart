@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_unified_messaging/src/notification_handler.dart';
 import 'package:mockito/mockito.dart';
@@ -20,13 +21,11 @@ void main() {
       reset(kMockMessagingPlatform);
 
       // Setup default mock behaviors
-      when(
-        kMockMessagingPlatform.getToken(vapidKey: anyNamed('vapidKey')),
-      ).thenAnswer((_) => Future.value(kTestToken));
+      when(kMockMessagingPlatform.getToken(vapidKey: anyNamed('vapidKey')))
+          .thenAnswer((_) => Future.value(kTestToken));
 
-      when(
-        kMockMessagingPlatform.getInitialMessage(),
-      ).thenAnswer((_) => Future.value(null));
+      when(kMockMessagingPlatform.getInitialMessage())
+          .thenAnswer((_) => Future.value(null));
     });
 
     test('should test all accessible code paths in send method', () async {
@@ -200,15 +199,13 @@ void main() {
       // Create many concurrent operations to test thread safety and state management
       for (int i = 0; i < 50; i++) {
         futures.add(
-          notificationHandler
-              .send(
-                title: 'Rapid $i',
-                body: 'Body $i',
-                data: {'index': i, 'batch': 'rapid'},
-              )
-              .catchError(
-                (e) => null,
-              ), // Catch errors from platform dependencies
+          notificationHandler.send(
+            title: 'Rapid $i',
+            body: 'Body $i',
+            data: {'index': i, 'batch': 'rapid'},
+          ).catchError(
+            (e) => null,
+          ), // Catch errors from platform dependencies
         );
 
         futures.add(notificationHandler.getFCMToken().catchError((e) => null));

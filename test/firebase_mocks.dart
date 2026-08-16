@@ -84,16 +84,16 @@ class MockFirebasePlatform extends FirebasePlatform {
 /// Mock implementation of Firebase App
 class MockFirebaseApp extends FirebaseAppPlatform {
   MockFirebaseApp({String? name, FirebaseOptions? options})
-    : super(
-        name ?? defaultFirebaseAppName,
-        options ??
-            const FirebaseOptions(
-              apiKey: 'testApiKey',
-              appId: 'testAppId',
-              messagingSenderId: 'testSenderId',
-              projectId: 'testProjectId',
-            ),
-      );
+      : super(
+          name ?? defaultFirebaseAppName,
+          options ??
+              const FirebaseOptions(
+                apiKey: 'testApiKey',
+                appId: 'testAppId',
+                messagingSenderId: 'testSenderId',
+                projectId: 'testProjectId',
+              ),
+        );
 }
 
 // Platform Interface Mock Classes
@@ -109,83 +109,75 @@ class MockFirebaseMessaging extends Mock
   @override
   bool get isAutoInitEnabled {
     return super.noSuchMethod(
-          Invocation.getter(#isAutoInitEnabled),
-          returnValue: true,
-          returnValueForMissingStub: true,
-        )
-        as bool;
+      Invocation.getter(#isAutoInitEnabled),
+      returnValue: true,
+      returnValueForMissingStub: true,
+    ) as bool;
   }
 
   @override
   FirebaseMessagingPlatform delegateFor({FirebaseApp? app}) {
     return super.noSuchMethod(
-          Invocation.method(#delegateFor, [], {#app: app}),
-          returnValue: TestFirebaseMessagingPlatform(),
-          returnValueForMissingStub: TestFirebaseMessagingPlatform(),
-        )
-        as FirebaseMessagingPlatform;
+      Invocation.method(#delegateFor, [], {#app: app}),
+      returnValue: TestFirebaseMessagingPlatform(),
+      returnValueForMissingStub: TestFirebaseMessagingPlatform(),
+    ) as FirebaseMessagingPlatform;
   }
 
   @override
   FirebaseMessagingPlatform setInitialValues({bool? isAutoInitEnabled}) {
     return super.noSuchMethod(
-          Invocation.method(#setInitialValues, [], {
-            #isAutoInitEnabled: isAutoInitEnabled,
-          }),
-          returnValue: TestFirebaseMessagingPlatform(),
-          returnValueForMissingStub: TestFirebaseMessagingPlatform(),
-        )
-        as FirebaseMessagingPlatform;
+      Invocation.method(#setInitialValues, [], {
+        #isAutoInitEnabled: isAutoInitEnabled,
+      }),
+      returnValue: TestFirebaseMessagingPlatform(),
+      returnValueForMissingStub: TestFirebaseMessagingPlatform(),
+    ) as FirebaseMessagingPlatform;
   }
 
   @override
   Future<RemoteMessage?> getInitialMessage() {
     return super.noSuchMethod(
-          Invocation.method(#getInitialMessage, []),
-          returnValue: Future<RemoteMessage?>.value(null),
-          returnValueForMissingStub: Future<RemoteMessage?>.value(null),
-        )
-        as Future<RemoteMessage?>;
+      Invocation.method(#getInitialMessage, []),
+      returnValue: Future<RemoteMessage?>.value(null),
+      returnValueForMissingStub: Future<RemoteMessage?>.value(null),
+    ) as Future<RemoteMessage?>;
   }
 
   @override
   Future<void> deleteToken() {
     return super.noSuchMethod(
-          Invocation.method(#deleteToken, []),
-          returnValue: Future<void>.value(),
-          returnValueForMissingStub: Future<void>.value(),
-        )
-        as Future<void>;
+      Invocation.method(#deleteToken, []),
+      returnValue: Future<void>.value(),
+      returnValueForMissingStub: Future<void>.value(),
+    ) as Future<void>;
   }
 
   @override
   Future<String?> getAPNSToken() {
     return super.noSuchMethod(
-          Invocation.method(#getAPNSToken, []),
-          returnValue: Future<String?>.value('apns_token'),
-          returnValueForMissingStub: Future<String?>.value('apns_token'),
-        )
-        as Future<String?>;
+      Invocation.method(#getAPNSToken, []),
+      returnValue: Future<String?>.value('apns_token'),
+      returnValueForMissingStub: Future<String?>.value('apns_token'),
+    ) as Future<String?>;
   }
 
   @override
   Future<String> getToken({String? vapidKey}) {
     return super.noSuchMethod(
-          Invocation.method(#getToken, [], {#vapidKey: vapidKey}),
-          returnValue: Future<String>.value(kTestToken),
-          returnValueForMissingStub: Future<String>.value(kTestToken),
-        )
-        as Future<String>;
+      Invocation.method(#getToken, [], {#vapidKey: vapidKey}),
+      returnValue: Future<String>.value(kTestToken),
+      returnValueForMissingStub: Future<String>.value(kTestToken),
+    ) as Future<String>;
   }
 
   @override
   Future<void> setAutoInitEnabled(bool? enabled) {
     return super.noSuchMethod(
-          Invocation.method(#setAutoInitEnabled, [enabled]),
-          returnValue: Future<void>.value(),
-          returnValueForMissingStub: Future<void>.value(),
-        )
-        as Future<void>;
+      Invocation.method(#setAutoInitEnabled, [enabled]),
+      returnValue: Future<void>.value(),
+      returnValueForMissingStub: Future<void>.value(),
+    ) as Future<void>;
   }
 
   @override
@@ -195,25 +187,23 @@ class MockFirebaseMessaging extends Mock
     bool sound = false,
   }) {
     return super.noSuchMethod(
-          Invocation.method(#setForegroundNotificationPresentationOptions, [], {
-            #alert: alert,
-            #badge: badge,
-            #sound: sound,
-          }),
-          returnValue: Future<void>.value(),
-          returnValueForMissingStub: Future<void>.value(),
-        )
-        as Future<void>;
+      Invocation.method(#setForegroundNotificationPresentationOptions, [], {
+        #alert: alert,
+        #badge: badge,
+        #sound: sound,
+      }),
+      returnValue: Future<void>.value(),
+      returnValueForMissingStub: Future<void>.value(),
+    ) as Future<void>;
   }
 
   @override
   Stream<String> get onTokenRefresh {
     return super.noSuchMethod(
-          Invocation.getter(#onTokenRefresh),
-          returnValue: Stream<String>.fromIterable([kTestToken]),
-          returnValueForMissingStub: Stream<String>.fromIterable([kTestToken]),
-        )
-        as Stream<String>;
+      Invocation.getter(#onTokenRefresh),
+      returnValue: Stream<String>.fromIterable([kTestToken]),
+      returnValueForMissingStub: Stream<String>.fromIterable([kTestToken]),
+    ) as Stream<String>;
   }
 
   @override
@@ -228,72 +218,67 @@ class MockFirebaseMessaging extends Mock
     bool sound = true,
   }) {
     return super.noSuchMethod(
-          Invocation.method(#requestPermission, [], {
-            #alert: alert,
-            #announcement: announcement,
-            #badge: badge,
-            #carPlay: carPlay,
-            #criticalAlert: criticalAlert,
-            #providesAppNotificationSettings: providesAppNotificationSettings,
-            #provisional: provisional,
-            #sound: sound,
-          }),
-          returnValue: Future<NotificationSettings>.value(
-            const NotificationSettings(
-              alert: AppleNotificationSetting.enabled,
-              announcement: AppleNotificationSetting.enabled,
-              authorizationStatus: AuthorizationStatus.authorized,
-              badge: AppleNotificationSetting.enabled,
-              carPlay: AppleNotificationSetting.enabled,
-              lockScreen: AppleNotificationSetting.enabled,
-              notificationCenter: AppleNotificationSetting.enabled,
-              showPreviews: AppleShowPreviewSetting.always,
-              timeSensitive: AppleNotificationSetting.enabled,
-              criticalAlert: AppleNotificationSetting.enabled,
-              sound: AppleNotificationSetting.enabled,
-              providesAppNotificationSettings:
-                  AppleNotificationSetting.disabled,
-            ),
-          ),
-          returnValueForMissingStub: Future<NotificationSettings>.value(
-            const NotificationSettings(
-              alert: AppleNotificationSetting.enabled,
-              announcement: AppleNotificationSetting.enabled,
-              authorizationStatus: AuthorizationStatus.authorized,
-              badge: AppleNotificationSetting.enabled,
-              carPlay: AppleNotificationSetting.enabled,
-              lockScreen: AppleNotificationSetting.enabled,
-              notificationCenter: AppleNotificationSetting.enabled,
-              showPreviews: AppleShowPreviewSetting.always,
-              timeSensitive: AppleNotificationSetting.enabled,
-              criticalAlert: AppleNotificationSetting.enabled,
-              sound: AppleNotificationSetting.enabled,
-              providesAppNotificationSettings:
-                  AppleNotificationSetting.disabled,
-            ),
-          ),
-        )
-        as Future<NotificationSettings>;
+      Invocation.method(#requestPermission, [], {
+        #alert: alert,
+        #announcement: announcement,
+        #badge: badge,
+        #carPlay: carPlay,
+        #criticalAlert: criticalAlert,
+        #providesAppNotificationSettings: providesAppNotificationSettings,
+        #provisional: provisional,
+        #sound: sound,
+      }),
+      returnValue: Future<NotificationSettings>.value(
+        const NotificationSettings(
+          alert: AppleNotificationSetting.enabled,
+          announcement: AppleNotificationSetting.enabled,
+          authorizationStatus: AuthorizationStatus.authorized,
+          badge: AppleNotificationSetting.enabled,
+          carPlay: AppleNotificationSetting.enabled,
+          lockScreen: AppleNotificationSetting.enabled,
+          notificationCenter: AppleNotificationSetting.enabled,
+          showPreviews: AppleShowPreviewSetting.always,
+          timeSensitive: AppleNotificationSetting.enabled,
+          criticalAlert: AppleNotificationSetting.enabled,
+          sound: AppleNotificationSetting.enabled,
+          providesAppNotificationSettings: AppleNotificationSetting.disabled,
+        ),
+      ),
+      returnValueForMissingStub: Future<NotificationSettings>.value(
+        const NotificationSettings(
+          alert: AppleNotificationSetting.enabled,
+          announcement: AppleNotificationSetting.enabled,
+          authorizationStatus: AuthorizationStatus.authorized,
+          badge: AppleNotificationSetting.enabled,
+          carPlay: AppleNotificationSetting.enabled,
+          lockScreen: AppleNotificationSetting.enabled,
+          notificationCenter: AppleNotificationSetting.enabled,
+          showPreviews: AppleShowPreviewSetting.always,
+          timeSensitive: AppleNotificationSetting.enabled,
+          criticalAlert: AppleNotificationSetting.enabled,
+          sound: AppleNotificationSetting.enabled,
+          providesAppNotificationSettings: AppleNotificationSetting.disabled,
+        ),
+      ),
+    ) as Future<NotificationSettings>;
   }
 
   @override
   Future<void> subscribeToTopic(String? topic) {
     return super.noSuchMethod(
-          Invocation.method(#subscribeToTopic, [topic]),
-          returnValue: Future<void>.value(),
-          returnValueForMissingStub: Future<void>.value(),
-        )
-        as Future<void>;
+      Invocation.method(#subscribeToTopic, [topic]),
+      returnValue: Future<void>.value(),
+      returnValueForMissingStub: Future<void>.value(),
+    ) as Future<void>;
   }
 
   @override
   Future<void> unsubscribeFromTopic(String? topic) {
     return super.noSuchMethod(
-          Invocation.method(#unsubscribeFromTopic, [topic]),
-          returnValue: Future<void>.value(),
-          returnValueForMissingStub: Future<void>.value(),
-        )
-        as Future<void>;
+      Invocation.method(#unsubscribeFromTopic, [topic]),
+      returnValue: Future<void>.value(),
+      returnValueForMissingStub: Future<void>.value(),
+    ) as Future<void>;
   }
 }
 

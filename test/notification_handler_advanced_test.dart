@@ -200,15 +200,13 @@ void main() {
       // Create many concurrent operations to test thread safety and state management
       for (int i = 0; i < 50; i++) {
         futures.add(
-          notificationHandler
-              .send(
-                title: 'Rapid $i',
-                body: 'Body $i',
-                data: {'index': i, 'batch': 'rapid'},
-              )
-              .catchError(
-                (e) => null,
-              ), // Catch errors from platform dependencies
+          notificationHandler.send(
+            title: 'Rapid $i',
+            body: 'Body $i',
+            data: {'index': i, 'batch': 'rapid'},
+          ).catchError(
+            (e) => null,
+          ), // Catch errors from platform dependencies
         );
 
         futures.add(notificationHandler.getFCMToken().catchError((e) => null));
